@@ -1,4 +1,4 @@
-name: Upload files
+name: Rename and move files
 
 on:
   push:
@@ -6,34 +6,33 @@ on:
       - main
 
 jobs:
-  upload:
+  rename-move:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Setup Node.js (if using Node.js tools)
-        uses: actions/setup-node@v2
-        with:
-          node-version: '14'
+    - name: Rename and move file
+      run: |
+        UPLOAD_DIR="images"
+        TEMP_FILE="images/tempfile.png"
 
-      - name: Upload files
-        run: |
-          # Assuming files are uploaded to the images directory
-          UPLOAD_DIR="images"
+        if [ ! -f "$TEMP_FILE" ]; then
+          echo "No temp file found to rename."
+          exit 1
+        fi
 
-          # Ensure the upload directory exists
-          mkdir -p $UPLOAD_DIR
+        # Generate a random filename
+        RANDOM_NUM=$(shuf -i 100-999 -n 1)
+        NEW_FILENAME="$UPLOAD_DIR/$RANDOM_NUM.png"
 
-          # Check if the upload directory is not empty
-          if [ -z "$(ls -A $UPLOAD_DIR)" ]; then
-            echo "No files found in $UPLOAD_DIR"
-            exit 1
-          fi
+        # Move and rename the file
+        mv "$TEMP_FILE" "$NEW_FILENAME"
 
-          # Add, commit, and push the changes
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add $UPLOAD_DIR
-          git commit -m "Upload files from ShareX to images directory"
-          git push
+        # Add, commit, and push the changes
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add "$NEW_FILENAME"
+        git commit -m "Renamed and moved file to $NEW_FILENAME"
+        git push
